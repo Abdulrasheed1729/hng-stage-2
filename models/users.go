@@ -44,3 +44,7 @@ func FindUserByEmail(email string) (*User, error) {
 	return &user, nil
 
 }
+
+func (user *User) ValidatePassword(password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+}
