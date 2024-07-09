@@ -2,10 +2,14 @@ package database
 
 import (
 	"fmt"
+	"hng-stage2/internal/models"
+	"log"
 	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 var Database *gorm.DB
@@ -22,8 +26,11 @@ func Connect() error {
 	Database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
+		log.Fatal("Failed to connect to database: ", err)
 		return err
 	}
+
+	Database.AutoMigrate(&models.User{}, &models.Organisation{})
 
 	return nil
 }

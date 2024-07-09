@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"hng-stage2/api"
 	"os"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -18,7 +17,7 @@ func main() {
 
 	serverPort := fmt.Sprintf(":%s", port)
 
-	server := api.NewAPIServer(serverPort)
+	server := NewAPIServer(serverPort)
 
 	server.Run()
 }

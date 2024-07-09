@@ -3,7 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
-	"hng-stage2/models"
+	"hng-stage2/internal/models"
 	"net/http"
 	"os"
 	"time"
@@ -11,7 +11,12 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	jwt "github.com/golang-jwt/jwt/v4"
+
+	_ "github.com/joho/godotenv/autoload"
 )
+
+// Just like the H in gin
+type H map[string]any
 
 var Validate *validator.Validate = validator.New()
 
@@ -27,8 +32,9 @@ func GenerateJWT(user models.User) (string, error) {
 	now := time.Now()
 	claims := &JWTClaims{
 		Email:  user.Email,
-		UserID: user.ID.String(),
+		UserID: user.UserID,
 		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Hour * 24)},
 		},
 	}
@@ -71,14 +77,9 @@ func RespondWithValidationError(w http.ResponseWriter, err error) {
 	WriteJSON(w, http.StatusUnprocessableEntity, response)
 }
 
-func RespondWithError(w http.ResponseWriter, status int, statusText, message string, statusCode int) {
-	response := map[string]interface{}{
-		"status":     statusText,
-		"message":    message,
-		"statusCode": statusCode,
-	}
+func RespondWithError(w http.ResponseWriter, statusCode int, response ErrorResponse) {
 
-	WriteJSON(w, status, response)
+	WriteJSON(w, statusCode, response)
 }
 
 func ValidateJWT(tokenString string) (*JWTClaims, error) {
