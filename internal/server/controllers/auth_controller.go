@@ -59,7 +59,7 @@ func (controller *AuthController) Register(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	existingUser, _ := controller.userService.GetUserByEmail(user.Email)
+	// existingUser, _ := controller.userService.GetUserByEmail(user.Email)
 
 	// if err != nil {
 
@@ -86,19 +86,43 @@ func (controller *AuthController) Register(w http.ResponseWriter, r *http.Reques
 
 	// }
 
-	if existingUser != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorResponse{
-			Status:     "Bad Request",
-			Message:    "Email already exists",
-			StatusCode: http.StatusBadRequest,
+	// if existingUser != nil {
+	// 	helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorResponse{
+	// 		Status:     "Bad Request",
+	// 		Message:    "Email already exists",
+	// 		StatusCode: http.StatusBadRequest,
+	// 	})
+	// 	return
+	// }
+
+	isUserExisting, err := controller.userService.IsUserExisting(user)
+
+	if err != nil {
+		helpers.WriteJSON(w, http.StatusInternalServerError, helpers.ErrorResponse{
+			Status:     http.StatusText(http.StatusInternalServerError),
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
 		})
+		return
+	}
+
+	if isUserExisting {
+		helpers.WriteJSON(w, http.StatusUnprocessableEntity, helpers.ErrorResponse{
+			Errors: []helpers.Error{
+				{
+					Field:   "email",
+					Message: "email already exists",
+				},
+			},
+		})
+
 		return
 	}
 
 	newUser, err := controller.userService.Register(&user)
 
 	if err != nil {
-
+		// panic(err)
 		helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorResponse{
 			Status:     "Bad Request",
 			Message:    "Registration unsuccessful",
@@ -107,7 +131,7 @@ func (controller *AuthController) Register(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	token, err := helpers.GenerateJWT(*newUser)
+	token, err := helpers.GenerateJWT(newUser.Email, newUser.Password)
 
 	if err != nil {
 		helpers.WriteJSON(w, http.StatusUnauthorized, helpers.ErrorResponse{
@@ -153,13 +177,14 @@ func (controller AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
 			Status:     "Bad request",
-			Message:    "Authentication failed",
+			Message:    err.Error(),
 			StatusCode: http.StatusUnauthorized,
 		})
+
 		return
 	}
 
-	token, err := helpers.GenerateJWT(*user)
+	token, err := helpers.GenerateJWT(user.Email, user.Password)
 	if err != nil {
 		helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
 			Status:     "Bad request",

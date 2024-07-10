@@ -3,9 +3,9 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
-	"hng-stage2/internal/models"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -26,13 +26,13 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(user models.User) (string, error) {
+func GenerateJWT(email, userID string) (string, error) {
 
 	secret := os.Getenv("JWT_SECRET")
 	now := time.Now()
 	claims := &JWTClaims{
-		Email:  user.Email,
-		UserID: user.UserID,
+		Email:  email,
+		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: &jwt.NumericDate{Time: now.Add(time.Hour * 24)},
@@ -40,7 +40,7 @@ func GenerateJWT(user models.User) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(secret)
+	return token.SignedString([]byte(secret))
 }
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
@@ -88,7 +88,7 @@ func ValidateJWT(tokenString string) (*JWTClaims, error) {
 	jwtKey := os.Getenv("JWT_SECRET")
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return []byte(jwtKey), nil
 	})
 
 	if err != nil {
@@ -105,8 +105,25 @@ func ValidateJWT(tokenString string) (*JWTClaims, error) {
 	return claims, nil
 }
 
+// func ValidateJWT(tokenString string) (*jwt.Token, error) {
+// 	secret := os.Getenv("JWT_SECRET")
+
+// 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+// 		// Don't forget to validate the alg is what you expect:
+// 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+// 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+// 		}
+
+// 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+// 		return []byte(secret), nil
+// 	})
+// }
+
 func ValidateJWTFromRequest(r *http.Request) (*JWTClaims, error) {
-	tokenString := r.Header.Get("Authorization")
+	tokenHeader := r.Header.Get("Authorization")
+
+	tokenString := strings.Split(tokenHeader, " ")[1]
+
 	if tokenString == "" {
 		return nil, errors.New("missing or invalid token")
 	}

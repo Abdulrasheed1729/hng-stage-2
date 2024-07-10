@@ -18,9 +18,23 @@ func (r *UserSQLRepository) Create(user *models.User) error {
 	return r.DB.Create(user).Error
 }
 
+func (r UserSQLRepository) IsUserExisting(user models.User) (bool, error) {
+	result := r.DB.Where("email = ? ", user.Email).Limit(1).Find(&user)
+
+	if err := result.Error; err != nil {
+		return false, err
+	}
+
+	if result.RowsAffected > 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func (r *UserSQLRepository) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := r.DB.Where("email=?", email).First(&user).Error
+	err := r.DB.Where("email = ?", email).First(&user).Error
 	return &user, err
 }
 

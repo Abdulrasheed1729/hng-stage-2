@@ -6,13 +6,13 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	UserID    string `gorm:"primary_key" json:"userId"`
-	FirstName string `gorm:"not null" json:"firstName"`
-	LastName  string `gorm:"not null" json:"lastName"`
-	Email     string `gorm:"unique;not null" json:"email"`
-	Password  string `gorm:"not null" json:"password"`
-	Phone     string `json:"phone"`
+	UserID        string         `gorm:"primary_key" json:"userId"`
+	FirstName     string         `gorm:"not null" json:"firstName"`
+	LastName      string         `gorm:"not null" json:"lastName"`
+	Email         string         `gorm:"unique;not null" json:"email"`
+	Password      string         `gorm:"not null" json:"password"`
+	Phone         string         `json:"phone"`
+	Organisations []Organisation `gorm:"many2many:user_organisations;" json:"organisations"`
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {

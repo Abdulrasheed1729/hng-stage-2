@@ -8,4 +8,5 @@ type OrganisationRepository interface {
 	GetUserOrganisations(userID string) ([]models.Organisation, error)
 	GetUserByID(userID string) (*models.User, error)
 	AddUserToOrganisation(orgID, userID string) error
+	IsUserInOrganisation(orgID, userID string) (bool, error)
 }

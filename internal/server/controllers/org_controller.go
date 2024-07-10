@@ -60,7 +60,29 @@ func (controller OrganisationController) CreateOrganisation(w http.ResponseWrite
 
 func (controller OrganisationController) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
-	user, err := controller.organisationService.GetUser(userID)
+
+	claims, err := helpers.ValidateJWTFromRequest(r)
+
+	if err != nil {
+
+		helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
+			Status:     http.StatusText(http.StatusUnauthorized),
+			Message:    "Invalid token",
+			StatusCode: http.StatusUnauthorized,
+		})
+		return
+	}
+
+	if userID != claims.UserID {
+		helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
+			Status:     "Bad request",
+			Message:    "Client error",
+			StatusCode: http.StatusUnauthorized,
+		})
+		return
+	}
+
+	user, err := controller.organisationService.GetUserByID(claims.UserID)
 	if err != nil {
 		helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorResponse{
 			Status:     "Not found",
@@ -83,10 +105,15 @@ func (controller OrganisationController) GetUserByID(w http.ResponseWriter, r *h
 func (controller OrganisationController) GetUserOrganisations(w http.ResponseWriter, r *http.Request) {
 	claims, err := helpers.ValidateJWTFromRequest(r)
 	if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorResponse{
-			Status:     "Bad request",
-			Message:    "Authentication failure",
-			StatusCode: http.StatusBadRequest,
+		// helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorResponse{
+		// 	Status:     "Bad request",
+		// 	Message:    "Authentication failure",
+		// 	StatusCode: http.StatusBadRequest,
+		// })
+		helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
+			Status:     http.StatusText(http.StatusUnauthorized),
+			Message:    "Invalid token",
+			StatusCode: http.StatusUnauthorized,
 		})
 		return
 	}

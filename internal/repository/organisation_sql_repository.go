@@ -20,20 +20,47 @@ func (r *OrganisationSQLRepository) Create(org *models.Organisation) error {
 
 func (r *OrganisationSQLRepository) GetOrganisationByID(id string) (*models.Organisation, error) {
 	var org models.Organisation
+	// err := m.DB.Preload("Users").Where("org_id = ?", id).First(&org).Error
 	err := r.db.Where("org_id = ?", id).First(&org).Error
-	return &org, err
+	if err != nil {
+		return nil, err
+	}
+	return &org, nil
 }
 
 func (r *OrganisationSQLRepository) GetUserOrganisations(userID string) ([]models.Organisation, error) {
 	var orgs []models.Organisation
-	// id, err := uuid.Parse(userID)
 
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Adjust the query to use the correct column names from user_organisations table
+	err := r.db.
+		Preload("Users").
+		Joins("JOIN user_organisations ON user_organisations.org_id = organisations.org_id").
+		Joins("JOIN users ON user_organisations.user_id = users.user_id").
+		Where("users.user_id = ?", userID).
+		Find(&orgs).Error
+	if err != nil {
+		return nil, err
+	}
 
-	err := r.db.Model(&models.User{UserID: userID}).Association("Organisations").Find(&orgs)
-	return orgs, err
+	return orgs, nil
+}
+
+func (r *OrganisationSQLRepository) IsUserInOrganisation(orgID, userID string) (bool, error) {
+	var org models.Organisation
+	err := r.db.
+		Where("org_id = ?", orgID).
+		Preload("Users").
+		First(&org).Error
+	if err != nil {
+		return false, err
+	}
+
+	for _, user := range org.Users {
+		if user.UserID == userID {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (r *OrganisationSQLRepository) GetUserByID(userID string) (*models.User, error) {
@@ -43,5 +70,10 @@ func (r *OrganisationSQLRepository) GetUserByID(userID string) (*models.User, er
 }
 
 func (r *OrganisationSQLRepository) AddUserToOrganisation(orgID, userID string) error {
-	return r.db.Exec("INSERT INTO Organisations (user_id, org_id) VALUES (?, ?)", userID, orgID).Error
+
+	err := r.db.Exec("INSERT INTO user_organisations (org_id, user_id) VALUES (?, ?)", orgID, userID).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

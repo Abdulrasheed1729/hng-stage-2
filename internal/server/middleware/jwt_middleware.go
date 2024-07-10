@@ -2,8 +2,10 @@ package middleware
 
 import (
 	"fmt"
+	"hng-stage2/helpers"
 	"net/http"
 	"os"
+	"strings"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	_ "github.com/joho/godotenv/autoload"
@@ -11,17 +13,33 @@ import (
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
-func JWTAuthMiddleware(next http.Handler) http.Handler {
+func JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("Authorization")
+		tokenHeader := r.Header.Get("Authorization")
+
+		tokenString := strings.Split(tokenHeader, " ")[1]
 		if tokenString == "" {
 			http.Error(w, "Missing or invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		_, err := ValidateJWT(tokenString)
+		tkn, err := helpers.ValidateJWT(tokenString)
+
 		if err != nil {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
+				Status:     http.StatusText(http.StatusUnauthorized),
+				Message:    "Invalid token",
+				StatusCode: http.StatusUnauthorized,
+			})
+			return
+		}
+
+		if err := tkn.Valid(); err != nil {
+			helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
+				Status:     http.StatusText(http.StatusUnauthorized),
+				Message:    "Invalid token",
+				StatusCode: http.StatusUnauthorized,
+			})
 			return
 		}
 

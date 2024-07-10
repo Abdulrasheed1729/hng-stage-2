@@ -6,10 +6,10 @@ import (
 )
 
 type Organisation struct {
-	gorm.Model
 	OrgID       string `gorm:"primary_key;autoIncrement"` // orgId
 	Name        string `gorm:"not null"`                  // name
 	Description string `json:"description,omitempty"`     // description
+	Users       []User `json:"users" gorm:"many2many:user_organisations;foreignKey:OrgID;joinForeignKey:org_id;References:UserID;joinReferences:user_id"`
 }
 
 func (org *Organisation) BeforeCreate(tx *gorm.DB) (err error) {

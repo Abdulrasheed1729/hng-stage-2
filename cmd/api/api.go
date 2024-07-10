@@ -46,7 +46,7 @@ func (s *APIServer) Run() {
 
 	protectedRouter := router.PathPrefix("/api").Subrouter()
 
-	protectedRouter.Use(middleware.JWTAuthMiddleware)
+	protectedRouter.Use(middleware.JWTMiddleware)
 	protectedRouter.HandleFunc("/users/{id}", organisationController.GetUserByID).Methods("GET")
 	protectedRouter.HandleFunc("/organisations", organisationController.GetUserOrganisations).Methods("GET")
 	protectedRouter.HandleFunc("/organisations/{orgId}", organisationController.GetOrgByID).Methods("GET")

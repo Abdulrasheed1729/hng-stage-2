@@ -25,7 +25,7 @@ func (s *OrganisationService) GetByUser(userID string) ([]models.Organisation, e
 	return s.organisationRepository.GetUserOrganisations(userID)
 }
 
-func (s *OrganisationService) GetUser(userID string) (*models.User, error) {
+func (s *OrganisationService) GetUserByID(userID string) (*models.User, error) {
 	return s.organisationRepository.GetUserByID(userID)
 }
 

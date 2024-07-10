@@ -8,4 +8,5 @@ type UserRepository interface {
 	Create(user *models.User) error
 	GetUserByEmail(email string) (*models.User, error)
 	GetUserByID(id string) (*models.User, error)
+	IsUserExisting(user models.User) (bool, error)
 }
