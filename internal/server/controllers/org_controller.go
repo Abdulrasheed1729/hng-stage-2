@@ -7,8 +7,9 @@ import (
 	"hng-stage2/internal/service"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type OrganisationController struct {
@@ -61,7 +62,7 @@ func (controller OrganisationController) CreateOrganisation(w http.ResponseWrite
 func (controller OrganisationController) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
-	claims, err := helpers.ValidateJWTFromRequest(r)
+	_, err := helpers.ValidateJWTFromRequest(r)
 
 	if err != nil {
 
@@ -73,16 +74,16 @@ func (controller OrganisationController) GetUserByID(w http.ResponseWriter, r *h
 		return
 	}
 
-	if userID != claims.UserID {
-		helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
-			Status:     "Bad request",
-			Message:    "Client error",
-			StatusCode: http.StatusUnauthorized,
-		})
-		return
-	}
+	// if userID != claims.UserID {
+	// 	helpers.RespondWithError(w, http.StatusUnauthorized, helpers.ErrorResponse{
+	// 		Status:     "Bad request",
+	// 		Message:    "Client error",
+	// 		StatusCode: http.StatusUnauthorized,
+	// 	})
+	// 	return
+	// }
 
-	user, err := controller.organisationService.GetUserByID(claims.UserID)
+	user, err := controller.organisationService.GetUserByID(userID)
 	if err != nil {
 		helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorResponse{
 			Status:     "Not found",
